@@ -1,3 +1,5 @@
+# Debrid Download Manager
+
 <details>
 <summary><b>📝 Frontend .env Configuration</b></summary>
 
@@ -32,7 +34,7 @@ cd ../frontend
 npm run build
 ```
 
-### 4. Production Deployment
+## Production Deployment
 
 #### 🚀 Option A: PM2 Deployment (Recommended)
 
@@ -583,15 +585,15 @@ If you encounter any issues:
 
 <div align="center">
 
-**🎉 Congratulations! Your Real-Debrid Manager is now installed and running!**
+**🎉 Congratulations! Your Real-Debrid Download Manager is now installed and running!**
 
 Access your installation at: `https://your-domain.com`
 
-</div># 🚀 Real-Debrid Manager Installation Guide
+</div># 🚀 Real-Debrid Download Manager Installation Guide
 
 <div align="center">
 
-![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04+-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+ ![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04+-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
 ![Debian](https://img.shields.io/badge/Debian-12+-A81D33?style=for-the-badge&logo=debian&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
