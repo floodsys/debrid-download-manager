@@ -1,1 +1,0 @@
-# debrid-download-manager
