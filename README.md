@@ -1,5 +1,250 @@
 # Debrid Download Manager
 
+## 📋 Table of Contents
+
+- [Prerequisites](#-prerequisites)
+- [System Requirements](#-system-requirements)
+- [Installation](#-installation)
+  - [1. System Preparation](#1-system-preparation)
+  - [2. Install Dependencies](#2-install-dependencies)
+  - [3. Application Setup](#3-application-setup)
+  - [4. Production Deployment](#4-production-deployment)
+- [Configuration](#-configuration)
+- [SSL Certificate](#-ssl-certificate)
+- [Monitoring & Maintenance](#-monitoring--maintenance)
+- [Troubleshooting](#-troubleshooting)
+- [Quick Start Commands](#-quick-start-commands)
+
+## 💻 System Requirements
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| **CPU** | 2 cores | 4 cores |
+| **RAM** | 2 GB | 4 GB |
+| **Storage** | 10 GB | 20 GB+ |
+| **OS** | Ubuntu 22.04+ / Debian 12+ | Ubuntu 22.04 LTS |
+
+## 🔧 Prerequisites
+
+Before starting the installation, ensure you have:
+
+- ✅ Root or sudo access
+- ✅ A domain name (optional, for SSL)
+- ✅ Real-Debrid Premium Account
+- ✅ Basic knowledge of Linux command line
+
+
+### 🚀 Real-Debrid Download Manager Installation Guide 
+
+<div align="center">
+
+ ![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04+-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+![Debian](https://img.shields.io/badge/Debian-12+-A81D33?style=for-the-badge&logo=debian&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7+-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+
+</div>
+
+## 📦 Installation
+
+### 1. System Preparation
+
+First, update your system and install essential tools:
+
+```bash
+# Update system packages
+sudo apt update && sudo apt upgrade -y
+
+# Install essential tools
+sudo apt install -y curl wget git build-essential software-properties-common
+```
+
+### 2. Install Dependencies
+
+<details>
+<summary><b>📗 Node.js 18.x Installation</b></summary>
+
+```bash
+# Add NodeSource repository
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+
+# Install Node.js
+sudo apt install -y nodejs
+
+# Verify installation
+node --version  # Should show v18.x.x
+npm --version   # Should show 9.x.x
+```
+
+</details>
+
+<details>
+<summary><b>🍃 MongoDB 6.0 Installation</b></summary>
+
+```bash
+# Import MongoDB GPG key
+curl -fsSL https://pgp.mongodb.com/server-6.0.asc | \
+  sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
+
+# Add MongoDB repository
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] \
+  https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/6.0 multiverse" | \
+  sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+
+# Update and install MongoDB
+sudo apt update
+sudo apt install -y mongodb-org
+
+# Start and enable MongoDB
+sudo systemctl start mongod
+sudo systemctl enable mongod
+
+# Verify MongoDB is running
+sudo systemctl status mongod
+```
+
+</details>
+
+<details>
+<summary><b>🔴 Redis Installation</b></summary>
+
+```bash
+# Install Redis
+sudo apt install -y redis-server
+
+# Secure Redis with a password
+sudo sed -i 's/^# requirepass foobared/requirepass YOUR_STRONG_REDIS_PASSWORD/g' /etc/redis/redis.conf
+
+# Configure for systemd
+sudo sed -i 's/^supervised no/supervised systemd/g' /etc/redis/redis.conf
+
+# Restart and enable Redis
+sudo systemctl restart redis
+sudo systemctl enable redis
+
+# Test Redis connection
+redis-cli ping
+# Should return: PONG
+```
+
+</details>
+
+<details>
+<summary><b>🌐 Nginx Installation</b></summary>
+
+```bash
+# Install Nginx
+sudo apt install -y nginx
+
+# Start and enable Nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+```
+
+</details>
+
+<details>
+<summary><b>🔄 PM2 Process Manager</b></summary>
+
+```bash
+# Install PM2 globally
+sudo npm install -g pm2
+
+# Setup PM2 startup script
+pm2 startup systemd
+# Follow the command output instructions
+```
+
+</details>
+
+### 3. Application Setup
+
+#### 📂 Clone and Prepare Application
+
+```bash
+# Create application directory
+sudo mkdir -p /opt/real-debrid-manager
+sudo chown $USER:$USER /opt/real-debrid-manager
+
+# Clone repository (replace with your repo URL)
+cd /opt
+git clone https://github.com/yourusername/real-debrid-manager.git
+cd real-debrid-manager
+```
+
+#### ⚙️ Backend Configuration
+
+```bash
+# Navigate to backend
+cd backend
+
+# Install dependencies
+npm install
+
+# Create environment file
+cp .env.example .env
+
+# Generate secure secrets
+echo "JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")"
+echo "SESSION_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")"
+
+# Edit configuration
+nano .env
+```
+
+<details>
+<summary><b>📝 Backend .env Configuration</b></summary>
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=production
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/realdebrid-manager
+
+# Redis
+REDIS_URL=redis://:YOUR_STRONG_REDIS_PASSWORD@localhost:6379
+
+# JWT Secret (use generated value)
+JWT_SECRET=your-generated-jwt-secret
+
+# Real-Debrid
+REAL_DEBRID_API_KEY=your-real-debrid-api-key
+
+# Admin Account
+ADMIN_EMAIL=admin@yourdomain.com
+ADMIN_PASSWORD=change_this_immediately
+
+# CORS
+FRONTEND_URL=http://localhost:3000
+
+# Session Secret (use generated value)
+SESSION_SECRET=your-generated-session-secret
+```
+
+</details>
+
+#### 🎨 Frontend Configuration
+
+```bash
+# Navigate to frontend
+cd ../frontend
+
+# Install dependencies
+npm install
+
+# Create environment file
+cp .env.example .env
+nano .env
+```
+
+<details>
+<summary><b>📝 Frontend .env Configuration</b></summary>
+
+```env
+
 <details>
 <summary><b>📝 Frontend .env Configuration</b></summary>
 
@@ -34,7 +279,7 @@ cd ../frontend
 npm run build
 ```
 
-## Production Deployment
+### 4. Production Deployment
 
 #### 🚀 Option A: PM2 Deployment (Recommended)
 
@@ -588,247 +833,3 @@ If you encounter any issues:
 **🎉 Congratulations! Your Real-Debrid Download Manager is now installed and running!**
 
 Access your installation at: `https://your-domain.com`
-
-</div># 🚀 Real-Debrid Download Manager Installation Guide
-
-<div align="center">
-
- ![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04+-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
-![Debian](https://img.shields.io/badge/Debian-12+-A81D33?style=for-the-badge&logo=debian&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-7+-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-
-</div>
-
-## 📋 Table of Contents
-
-- [Prerequisites](#-prerequisites)
-- [System Requirements](#-system-requirements)
-- [Installation](#-installation)
-  - [1. System Preparation](#1-system-preparation)
-  - [2. Install Dependencies](#2-install-dependencies)
-  - [3. Application Setup](#3-application-setup)
-  - [4. Production Deployment](#4-production-deployment)
-- [Configuration](#-configuration)
-- [SSL Certificate](#-ssl-certificate)
-- [Monitoring & Maintenance](#-monitoring--maintenance)
-- [Troubleshooting](#-troubleshooting)
-- [Quick Start Commands](#-quick-start-commands)
-
-## 💻 System Requirements
-
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| **CPU** | 2 cores | 4 cores |
-| **RAM** | 2 GB | 4 GB |
-| **Storage** | 10 GB | 20 GB+ |
-| **OS** | Ubuntu 22.04+ / Debian 12+ | Ubuntu 22.04 LTS |
-
-## 🔧 Prerequisites
-
-Before starting the installation, ensure you have:
-
-- ✅ Root or sudo access
-- ✅ A domain name (optional, for SSL)
-- ✅ Real-Debrid Premium Account
-- ✅ Basic knowledge of Linux command line
-
-## 📦 Installation
-
-### 1. System Preparation
-
-First, update your system and install essential tools:
-
-```bash
-# Update system packages
-sudo apt update && sudo apt upgrade -y
-
-# Install essential tools
-sudo apt install -y curl wget git build-essential software-properties-common
-```
-
-### 2. Install Dependencies
-
-<details>
-<summary><b>📗 Node.js 18.x Installation</b></summary>
-
-```bash
-# Add NodeSource repository
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-
-# Install Node.js
-sudo apt install -y nodejs
-
-# Verify installation
-node --version  # Should show v18.x.x
-npm --version   # Should show 9.x.x
-```
-
-</details>
-
-<details>
-<summary><b>🍃 MongoDB 6.0 Installation</b></summary>
-
-```bash
-# Import MongoDB GPG key
-curl -fsSL https://pgp.mongodb.com/server-6.0.asc | \
-  sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
-
-# Add MongoDB repository
-echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] \
-  https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/6.0 multiverse" | \
-  sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-
-# Update and install MongoDB
-sudo apt update
-sudo apt install -y mongodb-org
-
-# Start and enable MongoDB
-sudo systemctl start mongod
-sudo systemctl enable mongod
-
-# Verify MongoDB is running
-sudo systemctl status mongod
-```
-
-</details>
-
-<details>
-<summary><b>🔴 Redis Installation</b></summary>
-
-```bash
-# Install Redis
-sudo apt install -y redis-server
-
-# Secure Redis with a password
-sudo sed -i 's/^# requirepass foobared/requirepass YOUR_STRONG_REDIS_PASSWORD/g' /etc/redis/redis.conf
-
-# Configure for systemd
-sudo sed -i 's/^supervised no/supervised systemd/g' /etc/redis/redis.conf
-
-# Restart and enable Redis
-sudo systemctl restart redis
-sudo systemctl enable redis
-
-# Test Redis connection
-redis-cli ping
-# Should return: PONG
-```
-
-</details>
-
-<details>
-<summary><b>🌐 Nginx Installation</b></summary>
-
-```bash
-# Install Nginx
-sudo apt install -y nginx
-
-# Start and enable Nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
-```
-
-</details>
-
-<details>
-<summary><b>🔄 PM2 Process Manager</b></summary>
-
-```bash
-# Install PM2 globally
-sudo npm install -g pm2
-
-# Setup PM2 startup script
-pm2 startup systemd
-# Follow the command output instructions
-```
-
-</details>
-
-### 3. Application Setup
-
-#### 📂 Clone and Prepare Application
-
-```bash
-# Create application directory
-sudo mkdir -p /opt/real-debrid-manager
-sudo chown $USER:$USER /opt/real-debrid-manager
-
-# Clone repository (replace with your repo URL)
-cd /opt
-git clone https://github.com/yourusername/real-debrid-manager.git
-cd real-debrid-manager
-```
-
-#### ⚙️ Backend Configuration
-
-```bash
-# Navigate to backend
-cd backend
-
-# Install dependencies
-npm install
-
-# Create environment file
-cp .env.example .env
-
-# Generate secure secrets
-echo "JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")"
-echo "SESSION_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")"
-
-# Edit configuration
-nano .env
-```
-
-<details>
-<summary><b>📝 Backend .env Configuration</b></summary>
-
-```env
-# Server Configuration
-PORT=5000
-NODE_ENV=production
-
-# Database
-MONGODB_URI=mongodb://localhost:27017/realdebrid-manager
-
-# Redis
-REDIS_URL=redis://:YOUR_STRONG_REDIS_PASSWORD@localhost:6379
-
-# JWT Secret (use generated value)
-JWT_SECRET=your-generated-jwt-secret
-
-# Real-Debrid
-REAL_DEBRID_API_KEY=your-real-debrid-api-key
-
-# Admin Account
-ADMIN_EMAIL=admin@yourdomain.com
-ADMIN_PASSWORD=change_this_immediately
-
-# CORS
-FRONTEND_URL=http://localhost:3000
-
-# Session Secret (use generated value)
-SESSION_SECRET=your-generated-session-secret
-```
-
-</details>
-
-#### 🎨 Frontend Configuration
-
-```bash
-# Navigate to frontend
-cd ../frontend
-
-# Install dependencies
-npm install
-
-# Create environment file
-cp .env.example .env
-nano .env
-```
-
-<details>
-<summary><b>📝 Frontend .env Configuration</b></summary>
-
-```env
