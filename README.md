@@ -9,11 +9,11 @@
   - [2. Install Dependencies](#2-install-dependencies)
   - [3. Application Setup](#3-application-setup)
   - [4. Production Deployment](#4-production-deployment)
-- [Configuration](#-configuration)
 - [SSL Certificate](#-ssl-certificate)
 - [Monitoring & Maintenance](#-monitoring--maintenance)
 - [Troubleshooting](#-troubleshooting)
 - [Quick Start Commands](#-quick-start-commands)
+- [Post Installation](#-post-installation)
 
 ## 💻 System Requirements
 
@@ -829,7 +829,3 @@ If you encounter any issues:
 ---
 
 <div align="center">
-
-**🎉 Congratulations! Your Real-Debrid Download Manager is now installed and running!**
-
-Access your installation at: `https://your-domain.com`
