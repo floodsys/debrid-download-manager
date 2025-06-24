@@ -1,8 +1,121 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
+import { 
+  Plus, 
+  Download, 
+  Clock, 
+  CheckCircle, 
+  AlertCircle,
+  TrendingUp,
+  HardDrive,
+  Activity,
+  Link2,
+  FolderOpen
+} from 'lucide-react';
+import { downloadsAPI, categoriesAPI } from '../services/api';
+import { useAuthStore } from '../store/authStore';
+import { useSocket } from '../services/socket';
+import Modal from '../components/Modal';
+import DownloadsList from '../components/DownloadsList';
+import toast from 'react-hot-toast';
+
+// Stats Card Component
+function StatsCard({ title, value, icon: Icon, color = 'blue', trend }) {
+  const colorClasses = {
+    blue: 'bg-blue-50 text-blue-600',
+    green: 'bg-green-50 text-green-600',
+    yellow: 'bg-yellow-50 text-yellow-600',
+    purple: 'bg-purple-50 text-purple-600',
+  };
+
+  return (
+    <div className="card">
+      <div className="card-body">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+            {trend && (
+              <p className="text-sm text-gray-500 mt-1">
+                <TrendingUp className="inline w-4 h-4 mr-1" />
+                {trend}
+              </p>
+            )}
+          </div>
+          <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+            <Icon className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Add Download Modal Component
+function AddDownloadModal({ isOpen, onClose, categories }) {
+  const queryClient = useQueryClient();
+  const { canDownload, getRemainingDownloads } = useAuthStore();
+  
+  const { 
+    register, 
+    handleSubmit, 
+    reset,
+    formState: { errors, isSubmitting } 
+  } = useForm();
+
+  const addMutation = useMutation(downloadsAPI.add, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['downloads']);
+      queryClient.invalidateQueries(['download-stats']);
+      toast.success('Download added successfully');
+      reset();
+      onClose();
+    },
+  });
+
+  const onSubmit = (data) => {
+    if (!canDownload()) {
+      toast.error('Download quota exceeded for today');
+      return;
+    }
+    
+    addMutation.mutate(data);
+  };
+
+  const remainingDownloads = getRemainingDownloads();
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add New Download"
+      size="lg"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {remainingDownloads !== null && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              You have <span className="font-semibold">{remainingDownloads}</span> downloads remaining today
+            </p>
+          </div>
+        )}
+        
+        <div>
+          <label htmlFor="magnetLink" className="form-label">
+            Magnet Link
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Link2 className="h-5 w-5 text-gray-400" />
+            </div>
             <textarea
               {...register('magnetLink', {
                 required: 'Magnet link is required',
                 pattern: {
-                  value: /^magnet:\?xt=urn:btih:[a-fA-F0-9]/,
+                  value: /^magnet:\?xt=urn:btih:[a-fA-F0-9]{40}/,
                   message: 'Invalid magnet link format'
                 }
               })}
@@ -241,121 +354,4 @@ export default function Dashboard() {
       />
     </div>
   );
-}import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
-import { 
-  Plus, 
-  Download, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle,
-  TrendingUp,
-  HardDrive,
-  Activity,
-  Link2,
-  FolderOpen
-} from 'lucide-react';
-import { downloadsAPI, categoriesAPI } from '../services/api';
-import { useAuthStore } from '../store/authStore';
-import { useSocket } from '../services/socket';
-import Modal from '../components/Modal';
-import DownloadsList from '../components/DownloadsList';
-import toast from 'react-hot-toast';
-
-// Stats Card Component
-function StatsCard({ title, value, icon: Icon, color = 'blue', trend }) {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    purple: 'bg-purple-50 text-purple-600',
-  };
-
-  return (
-    <div className="card">
-      <div className="card-body">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-            {trend && (
-              <p className="text-sm text-gray-500 mt-1">
-                <TrendingUp className="inline w-4 h-4 mr-1" />
-                {trend}
-              </p>
-            )}
-          </div>
-          <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-            <Icon className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
-
-// Add Download Modal Component
-function AddDownloadModal({ isOpen, onClose, categories }) {
-  const queryClient = useQueryClient();
-  const { canDownload, getRemainingDownloads } = useAuthStore();
-  
-  const { 
-    register, 
-    handleSubmit, 
-    reset,
-    formState: { errors, isSubmitting } 
-  } = useForm();
-
-  const addMutation = useMutation(downloadsAPI.add, {
-    onSuccess: () => {
-      queryClient.invalidateQueries(['downloads']);
-      queryClient.invalidateQueries(['download-stats']);
-      toast.success('Download added successfully');
-      reset();
-      onClose();
-    },
-  });
-
-  const onSubmit = (data) => {
-    if (!canDownload()) {
-      toast.error('Download quota exceeded for today');
-      return;
-    }
-    
-    addMutation.mutate(data);
-  };
-
-  const remainingDownloads = getRemainingDownloads();
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Add New Download"
-      size="lg"
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {remainingDownloads !== null && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              You have <span className="font-semibold">{remainingDownloads}</span> downloads remaining today
-            </p>
-          </div>
-        )}
-        
-        <div>
-          <label htmlFor="magnetLink" className="form-label">
-            Magnet Link
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Link2 className="h-5 w-5 text-gray-400" />
-            </div>
-            <textarea
-              {...register('magnetLink', {
-                required: 'Magnet link is required',
-                pattern: {
-                  value: /^magnet:\?xt=urn:btih:[a-

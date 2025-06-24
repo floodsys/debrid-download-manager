@@ -199,8 +199,10 @@ async function seedCategories() {
     
     for (const categoryData of defaultCategories) {
       try {
-        // Check if category exists by slug
+        // Generate slug from name
         const slug = categoryData.name.toLowerCase().replace(/\s+/g, '-');
+        
+        // Check if category exists by slug
         const existingCategory = await Category.findOne({ slug });
         
         if (existingCategory) {
@@ -218,8 +220,12 @@ async function seedCategories() {
             skipped++;
           }
         } else {
-          // Create new category
-          await Category.create(categoryData);
+          // Create new category with slug included
+          const newCategoryData = {
+            ...categoryData,
+            slug: slug
+          };
+          await Category.create(newCategoryData);
           console.log(`✅ Created: ${categoryData.name}`);
           created++;
         }
